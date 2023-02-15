@@ -73,3 +73,4 @@ Step 9 : follow remain steps which shows in promt --> done
 
 
 now, when ever you want to create a pipeline, change pool vmimage: "ubuntu-lastest" to "name: "default"
+
