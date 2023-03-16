@@ -66,6 +66,7 @@ stages:
         artifactName: 'drop'
         downloadPath: '$(System.DefaultWorkingDirectory)'
     - task: AzureRmWebAppDeployment@4
+      displayName: 'Dev-for-Reat'
       inputs:
         ConnectionType: 'AzureRM'
         azureSubscription: 'app-service-connection'
@@ -74,3 +75,24 @@ stages:
         packageForLinux: '$(System.DefaultWorkingDirectory)/drop/*.zip'
         RuntimeStack: 'NODE|16-lts'
         StartupCommand: 'pm2 serve /home/site/wwwroot --no-daemon --spa'
+    
+    - task: AzureRmWebAppDeployment@4
+      displayName: 'QA-for-Reat'
+      inputs:
+            ConnectionType: 'AzureRM'
+            azureSubscription: 'app-service-connection'
+            appType: 'webAppLinux'
+            WebAppName: 'QA-for-React'
+            packageForLinux: '$(System.DefaultWorkingDirectory)/drop/*.zip'
+            RuntimeStack: 'NODE|16-lts'
+            StartupCommand: 'pm2 serve /home/site/wwwroot --no-daemon --spa'
+    - task: AzureRmWebAppDeployment@4
+      displayName: 'Prod-for-Reat'
+      inputs:
+           ConnectionType: 'AzureRM'
+           azureSubscription: 'app-service-connection'
+           appType: 'webAppLinux'
+           WebAppName: 'Prod-for-React'
+           packageForLinux: '$(System.DefaultWorkingDirectory)/drop/*.zip'
+           RuntimeStack: 'NODE|16-lts'
+           StartupCommand: 'pm2 serve /home/site/wwwroot --no-daemon --spa'
