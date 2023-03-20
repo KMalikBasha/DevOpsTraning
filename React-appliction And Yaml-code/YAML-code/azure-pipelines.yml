@@ -7,7 +7,6 @@ parameters:
       - refs/heads/QA
       - refs/heads/PROD
 
- 
 resources:
    repositories: 
    - repository: React-application
@@ -19,80 +18,44 @@ trigger:  none
 pool:
   vmImage: 'ubuntu-latest'
 stages:
-- stage: Build
-  displayName: Build and Test
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      vmImage: 'ubuntu-latest'
-    steps:
-    - checkout: React-application
-    - task: NodeTool@0
-      displayName: 'Install Node.js '
-      inputs:
-        versionSpec: '16.x'
-    - script: |
-        npm install
-        npm run build 
-      displayName: 'npm install and build'
-      workingDirectory: '$(Build.SourcesDirectory)'
-    
-    - task: ArchiveFiles@2
-      inputs:
-        rootFolderOrFile: '$(Build.SourcesDirectory)/build'
-        includeRootFolder: false
-        archiveType: 'zip'
-        archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-        replaceExistingArchive: true
-    - task: PublishBuildArtifacts@1
-      inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-        ArtifactName: 'drop'
-        publishLocation: 'Container'
+  - template: build.yaml
 
-- stage: Deploy
-  displayName: Build and Test
-  jobs:
-  - job: Deploy
-    displayName: Build
-    pool:
-      vmImage: 'ubuntu-latest'
-    steps:
-    - task: DownloadBuildArtifacts@1
-      inputs:
-        buildType: 'current'
-        downloadType: 'single'
-        artifactName: 'drop'
-        downloadPath: '$(System.DefaultWorkingDirectory)'
-    - task: AzureRmWebAppDeployment@4
-      displayName: 'Dev-for-Reat'
-      inputs:
-        ConnectionType: 'AzureRM'
-        azureSubscription: 'app-service-connection'
-        appType: 'webAppLinux'
-        WebAppName: 'Dev-for-React'
-        packageForLinux: '$(System.DefaultWorkingDirectory)/drop/*.zip'
-        RuntimeStack: 'NODE|16-lts'
-        StartupCommand: 'pm2 serve /home/site/wwwroot --no-daemon --spa'
-    
-    - task: AzureRmWebAppDeployment@4
-      displayName: 'QA-for-Reat'
-      inputs:
+  - stage: Deploy
+    displayName: Build and Test
+    jobs:
+    - job: Deploy
+      displayName: Build
+      pool:
+        vmImage: 'ubuntu-latest'
+      steps:
+      - template: task-downloadbuild-artifact.yaml
+      - task: AzureRmWebAppDeployment@4
+        displayName: 'Dev-for-Reat'
+        inputs:
+          ConnectionType: 'AzureRM'
+          azureSubscription: 'app-service-connection'
+          appType: 'webAppLinux'
+          WebAppName: 'Dev-for-React'
+          packageForLinux: '$(System.DefaultWorkingDirectory)/drop/*.zip'
+          RuntimeStack: 'NODE|16-lts'
+          StartupCommand: 'pm2 serve /home/site/wwwroot --no-daemon --spa'
+      - task: AzureRmWebAppDeployment@4
+        displayName: 'QA-for-Reat'
+        inputs:
+              ConnectionType: 'AzureRM'
+              azureSubscription: 'app-service-connection'
+              appType: 'webAppLinux'
+              WebAppName: 'QA-for-React'
+              packageForLinux: '$(System.DefaultWorkingDirectory)/drop/*.zip'
+              RuntimeStack: 'NODE|16-lts'
+              StartupCommand: 'pm2 serve /home/site/wwwroot --no-daemon --spa'
+      - task: AzureRmWebAppDeployment@4
+        displayName: 'Prod-for-Reat'
+        inputs:
             ConnectionType: 'AzureRM'
             azureSubscription: 'app-service-connection'
             appType: 'webAppLinux'
-            WebAppName: 'QA-for-React'
+            WebAppName: 'Prod-for-React'
             packageForLinux: '$(System.DefaultWorkingDirectory)/drop/*.zip'
             RuntimeStack: 'NODE|16-lts'
             StartupCommand: 'pm2 serve /home/site/wwwroot --no-daemon --spa'
-    - task: AzureRmWebAppDeployment@4
-      displayName: 'Prod-for-Reat'
-      inputs:
-           ConnectionType: 'AzureRM'
-           azureSubscription: 'app-service-connection'
-           appType: 'webAppLinux'
-           WebAppName: 'Prod-for-React'
-           packageForLinux: '$(System.DefaultWorkingDirectory)/drop/*.zip'
-           RuntimeStack: 'NODE|16-lts'
-           StartupCommand: 'pm2 serve /home/site/wwwroot --no-daemon --spa'
